@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Flix Music</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background: #090909;
+      color: #fff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    /* =========================
+       SIDEBAR
+    ========================= */
+
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 245px;
+      background: #0d0d0d;
+      border-right: 1px solid #202020;
+      padding: 28px 16px;
+      z-index: 20;
+    }
+
+    .logo {
+      padding: 0 14px;
+      margin-bottom: 42px;
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .logo span {
+      color: #9b59ff;
+    }
+
+    .menu-title {
+      color: #555;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 0 13px;
+      margin: 24px 0 9px;
+    }
+
+    .menu button {
+      width: 100%;
+      height: 44px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #8a8a8a;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 0 13px;
+      cursor: pointer;
+      font-size: 14px;
+      text-align: left;
+      transition: .2s;
+    }
+
+    .menu button:hover {
+      background: #181818;
+      color: #fff;
+    }
+
+    .menu button.active {
+      background: #1c1c1c;
+      color: #fff;
+    }
+
+    .icon {
+      width: 19px;
+      height: 19px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: currentColor;
+    }
+
+    .icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* =========================
+       MAIN
+    ========================= */
+
+    .content {
+      margin-left: 245px;
+      padding: 30px 42px 150px;
+      max-width: 1500px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .welcome h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -.6px;
+    }
+
+    .welcome p {
+      color: #666;
+      font-size: 13px;
+      margin-top: 7px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search {
+      width: 230px;
+      height: 40px;
+      background: #111;
+      border: 1px solid #242424;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 13px;
+      color: #666;
+    }
+
+    .search input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .search input::placeholder {
+      color: #555;
+    }
+
+    .pro-button {
+      height: 40px;
+      padding: 0 18px;
+      border: none;
+      border-radius: 8px;
+      background: #fff;
+      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .pro-button:hover {
+      background: #ddd;
+      transform: translateY(-1px);
+    }
+
+    /* =========================
+       HERO
+    ========================= */
+
+    .hero {
+      position: relative;
+      min-height: 260px;
+      border: 1px solid #252525;
+      border-radius: 15px;
+      overflow: hidden;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 38px;
+      background:
+        radial-gradient(circle at 85% 30%, rgba(150, 80, 255, .25), transparent 35%),
+        linear-gradient(115deg, #151515, #0b0b0b 70%);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: 70px;
+      top: -20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.06), transparent 65%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 560px;
+    }
+
+    .hero-label {
+      color: #a56cff;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+      margin-bottom: 13px;
+    }
+
+    .hero h2 {
+      font-size: 32px;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      color: #888;
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 470px;
+      margin-bottom: 22px;
+    }
+
+    .hero-button {
+      height: 42px;
+      padding: 0 21px;
+      border: none;
+      border-radius: 8px;
+      background: #fff;
+      color: #000;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .hero-button:hover {
+      transform: translateY(-2px);
+    }
+
+    /* =========================
+       SECTION
+    ========================= */
+
+    .section {
+      margin-bottom: 38px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 17px;
+    }
+
+    .section-header h2 {
+      font-size: 19px;
+      letter-spacing: -.3px;
+    }
+
+    .see-all {
+      border: none;
+      background: transparent;
+      color: #666;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .see-all:hover {
+      color: #fff;
+    }
+
+    /* =========================
+       MUSIC CARDS
+    ========================= */
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 17px;
+    }
+
+    .music-card {
+      min-width: 0;
+      background: #111;
+      border: 1px solid #1d1d1d;
+      border-radius: 11px;
+      padding: 11px;
+      cursor: pointer;
+      transition: .22s;
+    }
+
+    .music-card:hover {
+      background: #171717;
+      border-color: #2b2b2b;
+      transform: translateY(-3px);
+    }
+
+    .cover {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, #272727, #101010);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .cover::before {
+      content: "";
+      position: absolute;
+      width: 60%;
+      height: 60%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle,
+        #080808 0 10%,
+        #303030 11% 14%,
+        #111 15% 32%,
+        #3c3c3c 33% 35%,
+        #151515 36% 100%);
+      box-shadow: 0 5px 20px rgba(0,0,0,.5);
+    }
+
+    .cover-icon {
+      position: relative;
+      z-index: 2;
+      color: #fff;
+      font-size: 24px;
+      opacity: .9;
+    }
+
+    .music-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 5px;
+    }
+
+    .music-card p {
+      color: #666;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* =========================
+       ARTISTS
+    ========================= */
+
+    .artist-cards {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .artist {
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .artist-photo {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2a2a2a, #111);
+      border: 1px solid #252525;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      transition: .2s;
+    }
+
+    .artist:hover .artist-photo {
+      border-color: #555;
+      transform: scale(1.03);
+    }
+
+    .artist-photo svg {
+      width: 30%;
+      height: 30%;
+      stroke: #aaa;
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .artist strong {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #bbb;
+    }
+
+    /* =========================
+       PLAYER
+    ========================= */
+
+    .player {
+      position: fixed;
+      z-index: 30;
+      left: 245px;
+      right: 0;
+      bottom: 0;
+      height: 92px;
+      background: rgba(13,13,13,.97);
+      border-top: 1px solid #252525;
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 18px;
+      backdrop-filter: blur(15px);
+    }
+
+    .player-song {
+      width: 245px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .player-cover {
+      width: 52px;
+      height: 52px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #292929, #101010);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      flex-shrink: 0;
+    }
+
+    .player-cover svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.7;
+    }
+
+    .player-info {
+      min-width: 0;
+    }
+
+    .player-info strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-info span {
+      color: #666;
+      font-size: 11px;
+    }
+
+    .player-center {
+      flex: 1;
+      max-width: 650px;
+      margin: auto;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 9px;
+    }
+
+    .control {
+      border: none;
+      background: transparent;
+      color: #777;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control:hover {
+      color: #fff;
+    }
+
+    .control svg {
+      width: 17px;
+      height: 17px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .play-button {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      background: #fff;
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .play-button svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .progress-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .time {
+      color: #555;
+      font-size: 9px;
+      width: 28px;
+    }
+
+    .progress {
+      flex: 1;
+      height: 3px;
+      background: #292929;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-value {
+      width: 28%;
+      height: 100%;
+      background: #aaa;
+    }
+
+    .player-right {
+      width: 150px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 14px;
+    }
+
+    /* =========================
+       RESPONSIVO
+    ========================= */
+
+    @media (max-width: 1100px) {
+      .cards {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .artist-cards {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .search {
+        width: 180px;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .sidebar {
+        width: 75px;
+        padding: 25px 9px;
+      }
+
+      .logo {
+        font-size: 0;
+        text-align: center;
+        padding: 0;
+      }
+
+      .logo::before {
+        content: "F";
+        font-size: 25px;
+        color: #fff;
+      }
+
+      .logo span {
+        display: none;
+      }
+
+      .menu-title {
+        display: none;
+      }
+
+      .menu button {
+        justify-content: center;
+        padding: 0;
+        font-size: 0;
+      }
+
+      .menu button .icon {
+        width: 20px;
+      }
+
+      .content {
+        margin-left: 75px;
+        padding: 25px 22px 140px;
+      }
+
+      .player {
+        left: 75px;
+      }
+
+      .player-song {
+        width: 180px;
+      }
+
+      .player-right {
+        display: none;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .welcome h1 {
+        font-size: 23px;
+      }
+
+      .search {
+        display: none;
+      }
+
+      .hero {
+        padding: 28px;
+        min-height: 230px;
+      }
+
+      .hero h2 {
+        font-size: 25px;
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .artist-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .player-song {
+        width: 140px;
+      }
+
+      .player-center {
+        max-width: none;
+      }
+
+      .controls {
+        margin-bottom: 6px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ÍCONE SVG DE MÚSICA -->
+  <svg style="display:none">
+    <symbol id="music-icon" viewBox="0 0 24 24">
+      <path d="M9 18V5l11-2v13"></path>
+      <circle cx="6" cy="18" r="3"></circle>
+      <circle cx="17" cy="16" r="3"></circle>
+    </symbol>
+  </svg>
+
+  <!-- SIDEBAR -->
+
+  <aside class="sidebar">
+
+    <div class="logo">
+      Flix<span>Music</span>
+    </div>
+
+    <div class="menu-title">Navegação</div>
+
+    <div class="menu">
+
+      <button class="active">
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 11.5 12 4l9 7.5"></path>
+            <path d="M5 10v10h14V10"></path>
+          </svg>
+        </span>
+        Início
+      </button>
+
+      <button>
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6"></circle>
+            <path d="m16 16 5 5"></path>
+          </svg>
+        </span>
+        Pesquisar
+      </button>
+
+      <button>
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 5h16v15H4z"></path>
+            <path d="M8 9h8M8 13h8M8 17h5"></path>
+          </svg>
+        </span>
+        Biblioteca
+      </button>
+
+    </div>
+
+    <div class="menu-title">Sua música</div>
+
+    <div class="menu">
+
+      <button>
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M20.8 8.8c0 5-8.8 10-8.8 10s-8.8-5-8.8-10A4.8 4.8 0 0 1 12 6a4.8 4.8 0 0 1 8.8 2.8Z"></path>
+          </svg>
+        </span>
+        Curtidas
+      </button>
+
+      <button>
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 5h16v14H4z"></path>
+            <path d="M8 9h8M8 13h5"></path>
+          </svg>
+        </span>
+        Playlists
+      </button>
+
+      <button>
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="8"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+          </svg>
+        </span>
+        Álbuns
+      </button>
+
+    </div>
+
+    <div class="menu-title">Conta</div>
+
+    <div class="menu">
+
+      <button>
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 21c1.5-4 4-6 8-6s6.5 2 8 6"></path>
+          </svg>
+        </span>
+        Perfil
+      </button>
+
+      <button>
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <path d="m12 3 2 5 5 .5-4 3.5 1.2 5-4.2-2.7L7.8 17.5 9 12 5 8.5 10 8z"></path>
+          </svg>
+        </span>
+        Flix Music Pro
+      </button>
+
+      <button>
+        <span class="icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a8 8 0 0 0-2-1.2L14.2 3h-4.4l-.3 2.7a8 8 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 2 1.2l.3 2.7h4.4l.3-2.7a8 8 0 0 0 2-1.2l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"></path>
+          </svg>
+        </span>
+        Configurações
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- CONTEÚDO -->
+
+  <main class="content">
+
+    <div class="topbar">
+
+      <div class="welcome">
+        <h1>Boa noite</h1>
+        <p>Encontre algo para ouvir.</p>
+      </div>
+
+      <div class="top-actions">
+
+        <div class="search">
+
+          <svg viewBox="0 0 24 24" width="17" height="17">
+            <circle cx="11" cy="11" r="6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"></circle>
+
+            <path d="m16 16 5 5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"></path>
+          </svg>
+
+          <input
+            type="text"
+            placeholder="Buscar músicas, artistas..."
+          >
+
+        </div>
+
+        <button class="pro-button">
+          FLIX MUSIC PRO
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+      <div class="hero-content">
+
+        <div class="hero-label">
+          Flix Music Pro
+        </div>
+
+        <h2>
+          Sua música.<br>
+          Sem limites.
+        </h2>
+
+        <p>
+          Escute suas músicas favoritas sem anúncios,
+          com qualidade superior e recursos exclusivos
+          para assinantes Pro.
+        </p>
+
+        <button class="hero-button">
+          Conhecer o Pro
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- RECOMENDADOS -->
+
+    <section class="section">
+
+      <div class="section-header">
+        <h2>Recomendados para você</h2>
+        <button class="see-all">Ver tudo</button>
+      </div>
+
+      <div class="cards">
+
+        <div class="music-card" onclick="playMusic('Midnight')">
+
+          <div class="cover">
+            <div class="cover-icon">♪</div>
+          </div>
+
+          <h3>Midnight</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+
+        <div class="music-card" onclick="playMusic('After Hours')">
+
+          <div class="cover">
+            <div class="cover-icon">♫</div>
+          </div>
+
+          <h3>After Hours</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+
+        <div class="music-card" onclick="playMusic('No Limits')">
+
+          <div class="cover">
+            <div class="cover-icon">♪</div>
+          </div>
+
+          <h3>No Limits</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+
+        <div class="music-card" onclick="playMusic('Eclipse')">
+
+          <div class="cover">
+            <div class="cover-icon">♫</div>
+          </div>
+
+          <h3>Eclipse</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+
+        <div class="music-card" onclick="playMusic('Frequency')">
+
+          <div class="cover">
+            <div class="cover-icon">♪</div>
+          </div>
+
+          <h3>Frequency</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- MAIS OUVIDAS -->
+
+    <section class="section">
+
+      <div class="section-header">
+        <h2>Mais ouvidas</h2>
+        <button class="see-all">Ver tudo</button>
+      </div>
+
+      <div class="cards">
+
+        <div class="music-card" onclick="playMusic('Top Hits')">
+
+          <div class="cover">
+            <div class="cover-icon">♫</div>
+          </div>
+
+          <h3>Top Hits</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+
+        <div class="music-card" onclick="playMusic('Night Drive')">
+
+          <div class="cover">
+            <div class="cover-icon">♪</div>
+          </div>
+
+          <h3>Night Drive</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+
+        <div class="music-card" onclick="playMusic('Focus')">
+
+          <div class="cover">
+            <div class="cover-icon">♫</div>
+          </div>
+
+          <h3>Focus</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+
+        <div class="music-card" onclick="playMusic('Energy')">
+
+          <div class="cover">
+            <div class="cover-icon">♪</div>
+          </div>
+
+          <h3>Energy</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+
+        <div class="music-card" onclick="playMusic('Relax')">
+
+          <div class="cover">
+            <div class="cover-icon">♫</div>
+          </div>
+
+          <h3>Relax</h3>
+          <p>Flix Music</p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ARTISTAS -->
+
+    <section class="section">
+
+      <div class="section-header">
+        <h2>Artistas populares</h2>
+        <button class="see-all">Ver tudo</button>
+      </div>
+
+      <div class="artist-cards">
+
+        <div class="artist">
+          <div class="artist-photo">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M5 21c1-4 3.5-6 7-6s6 2 7 6"></path>
+            </svg>
+          </div>
+          <strong>Artista 01</strong>
+        </div>
+
+        <div class="artist">
+          <div class="artist-photo">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M5 21c1-4 3.5-6 7-6s6 2 7 6"></path>
+            </svg>
+          </div>
+          <strong>Artista 02</strong>
+        </div>
+
+        <div class="artist">
+          <div class="artist-photo">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M5 21c1-4 3.5-6 7-6s6 2 7 6"></path>
+            </svg>
+          </div>
+          <strong>Artista 03</strong>
+        </div>
+
+        <div class="artist">
+          <div class="artist-photo">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M5 21c1-4 3.5-6 7-6s6 2 7 6"></path>
+            </svg>
+          </div>
+          <strong>Artista 04</strong>
+        </div>
+
+        <div class="artist">
+          <div class="artist-photo">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M5 21c1-4 3.5-6 7-6s6 2 7 6"></path>
+            </svg>
+          </div>
+          <strong>Artista 05</strong>
+        </div>
+
+        <div class="artist">
+          <div class="artist-photo">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M5 21c1-4 3.5-6 7-6s6 2 7 6"></path>
+            </svg>
+          </div>
+          <strong>Artista 06</strong>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- PLAYER -->
+
+  <div class="player">
+
+    <div class="player-song">
+
+      <div class="player-cover">
+
+        <svg viewBox="0 0 24 24">
+          <use href="#music-icon"></use>
+        </svg>
+
+      </div>
+
+      <div class="player-info">
+
+        <strong id="currentSong">
+          Nenhuma música selecionada
+        </strong>
+
+        <span>
+          Flix Music
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <div class="player-center">
+
+      <div class="controls">
+
+        <button class="control">
+
+          <svg viewBox="0 0 24 24">
+            <path d="M6 5v14"></path>
+            <path d="m18 6-8 6 8 6z"></path>
+          </svg>
+
+        </button>
+
+
+        <button class="control">
+
+          <svg viewBox="0 0 24 24">
+            <path d="m6 4 12 8-12 8z"></path>
+          </svg>
+
+        </button>
+
+
+        <button
+          class="play-button"
+          onclick="togglePlay()"
+          id="playButton"
+        >
+
+          <svg viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"></path>
+          </svg>
+
+        </button>
+
+
+        <button class="control">
+
+          <svg viewBox="0 0 24 24">
+            <path d="m6 6 8 6-8 6"></path>
+            <path d="M18 5v14"></path>
+          </svg>
+
+        </button>
+
+
+        <button class="control">
+
+          <svg viewBox="0 0 24 24">
+            <path d="M6 6h12M6 12h8M6 18h12"></path>
+          </svg>
+
+        </button>
+
+      </div>
+
+
+      <div class="progress-area">
+
+        <span class="time">0:00</span>
+
+        <div class="progress">
+          <div
+            class="progress-value"
+            id="progressValue"
+          ></div>
+        </div>
+
+        <span class="time">3:42</span>
+
+      </div>
+
+    </div>
+
+
+    <div class="player-right">
+
+      <button class="control">
+
+        <svg viewBox="0 0 24 24">
+          <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+
+      </button>
+
+      <button class="control">
+
+        <svg viewBox="0 0 24 24">
+          <path d="M5 10v4M9 7v10M13 5v14M17 8v8"></path>
+        </svg>
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    let playing = false;
+
+    function playMusic(name) {
+
+      document.getElementById("currentSong").textContent = name;
+
+      playing = true;
+
+      updatePlayButton();
+
+    }
+
+    function togglePlay() {
+
+      playing = !playing;
+
+      updatePlayButton();
+
+    }
+
+    function updatePlayButton() {
+
+      const button = document.getElementById("playButton");
+
+      if (playing) {
+
+        button.innerHTML = `
+          <svg viewBox="0 0 24 24">
+            <path d="M8 5h3v14H8zM13 5h3v14h-3z"></path>
+          </svg>
+        `;
+
+      } else {
+
+        button.innerHTML = `
+          <svg viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"></path>
+          </svg>
+        `;
+
+      }
+
+    }
+
+  </script>
+
+</body>
+</html>
