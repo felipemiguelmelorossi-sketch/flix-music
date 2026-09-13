@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -311,6 +310,10 @@
             font-weight: 800;
         }
 
+        .primary:hover {
+            opacity: .9;
+        }
+
         .secondary {
             border: 1px solid #333;
             background: #181818;
@@ -319,6 +322,10 @@
             border-radius: 7px;
             font-size: 12px;
             font-weight: 700;
+        }
+
+        .secondary:hover {
+            background: #222;
         }
 
         .section {
@@ -1213,7 +1220,7 @@
         /*
          * =========================================
          * FLIX MUSIC
-         * PLAYER + CATALOG
+         * PLAYER + CATALOG + STRIPE PRO
          * =========================================
          */
 
@@ -1362,18 +1369,32 @@
 
 
             /*
-             * Só troca o src quando
+             * Normaliza a URL do áudio.
+             * Isso evita problemas quando
+             * o navegador transforma uma URL
+             * relativa em absoluta.
+             */
+
+            const audioUrl =
+                new URL(
+                    song.audioUrl,
+                    window.location.href
+                ).href;
+
+
+            /*
+             * Só troca o áudio quando
              * realmente mudou.
              */
 
             if (
-                audio.src !== song.audioUrl
+                audio.src !== audioUrl
             ) {
 
                 audio.pause();
 
                 audio.src =
-                    song.audioUrl;
+                    audioUrl;
 
                 audio.load();
 
@@ -1433,7 +1454,10 @@
                     ) {
 
                         audio.src =
-                            currentSong.audioUrl;
+                            new URL(
+                                currentSong.audioUrl,
+                                window.location.href
+                            ).href;
 
                     } else {
 
@@ -2034,8 +2058,8 @@
 
 
                             /*
-                             * Primeiro pesquisa
-                             * no catálogo já carregado.
+                             * Pesquisa no catálogo
+                             * já carregado.
                              */
 
                             const localResults =
@@ -2187,7 +2211,7 @@
 
 
                 /*
-                 * Usa seu catalog.js se existir.
+                 * Usa catalog.js se existir.
                  */
 
                 if (
@@ -2311,40 +2335,131 @@
 
 
         /*
-         * PRO CHECKOUT
+         * =========================================
+         * FLIX MUSIC PRO - STRIPE CHECKOUT
+         * =========================================
          *
-         * Por enquanto o botão fica
-         * preparado para receber seu
-         * Stripe Checkout / Payment Link.
+         * O site chama a API:
+         *
+         * /api/create-checkout-session
+         *
+         * A chave secreta do Stripe NÃO fica
+         * neste arquivo.
          */
 
-        function startPro() {
+        async function startPro() {
 
-            /*
-             * COLOQUE AQUI O LINK DO SEU
-             * CHECKOUT DO FLIX MUSIC PRO.
-             *
-             * Exemplo:
-             *
-             * window.location.href =
-             * "https://buy.stripe.com/SEU_LINK";
-             */
+            try {
 
-            const checkoutUrl = "";
+                /*
+                 * Evita vários cliques
+                 * enquanto o checkout está
+                 * sendo criado.
+                 */
 
-            if (checkoutUrl) {
+                const buttons =
+                    document.querySelectorAll(
+                        ".pro-btn, .pro-section .primary, .hero .secondary"
+                    );
+
+
+                buttons.forEach(
+                    button => {
+
+                        button.disabled = true;
+
+                    }
+                );
+
+
+                const response =
+                    await fetch(
+                        "/api/create-checkout-session",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            }
+                        }
+                    );
+
+
+                let data = {};
+
+                try {
+
+                    data =
+                        await response.json();
+
+                } catch (jsonError) {
+
+                    console.error(
+                        "Resposta inválida da API:",
+                        jsonError
+                    );
+
+                }
+
+
+                if (
+                    !response.ok ||
+                    !data.url
+                ) {
+
+                    throw new Error(
+                        data.error ||
+                        "Não foi possível iniciar o checkout."
+                    );
+
+                }
+
+
+                /*
+                 * Vai para o Stripe Checkout.
+                 */
 
                 window.location.href =
-                    checkoutUrl;
+                    data.url;
 
-                return;
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao iniciar checkout:",
+                    error
+                );
+
+
+                alert(
+                    "Não foi possível abrir o checkout do Flix Music Pro.\n\n" +
+                    (
+                        error.message ||
+                        "Tente novamente."
+                    )
+                );
+
+
+                /*
+                 * Libera os botões novamente
+                 * se houver erro.
+                 */
+
+                const buttons =
+                    document.querySelectorAll(
+                        ".pro-btn, .pro-section .primary, .hero .secondary"
+                    );
+
+
+                buttons.forEach(
+                    button => {
+
+                        button.disabled = false;
+
+                    }
+                );
 
             }
-
-
-            alert(
-                "O Flix Music Pro está quase pronto. O checkout ainda não foi conectado."
-            );
 
         }
 
@@ -2451,6 +2566,61 @@
                         volume.value
                     );
 
+
+                /*
+                 * Se o usuário voltou do Stripe
+                 * com ?pro=success, mostra uma
+                 * confirmação.
+                 */
+
+                const params =
+                    new URLSearchParams(
+                        window.location.search
+                    );
+
+
+                if (
+                    params.get("pro") ===
+                    "success"
+                ) {
+
+                    alert(
+                        "🎉 Assinatura do Flix Music Pro realizada com sucesso!"
+                    );
+
+
+                    /*
+                     * Remove o parâmetro da URL.
+                     */
+
+                    window.history.replaceState(
+                        {},
+                        document.title,
+                        window.location.pathname
+                    );
+
+                }
+
+
+                if (
+                    params.get("pro") ===
+                    "cancel"
+                ) {
+
+                    alert(
+                        "O checkout foi cancelado."
+                    );
+
+
+                    window.history.replaceState(
+                        {},
+                        document.title,
+                        window.location.pathname
+                    );
+
+                }
+
+
                 loadMusicCatalog();
 
             }
@@ -2460,4 +2630,3 @@
 
 </body>
 </html>
-```
