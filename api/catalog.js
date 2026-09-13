@@ -1,196 +1,131 @@
 export default async function handler(req, res) {
-
     try {
-
-        // ========================================
-        // APENAS GET
-        // ========================================
-
+        // Permitir apenas GET
         if (req.method !== "GET") {
-
             return res.status(405).json({
                 success: false,
                 error: "Método não permitido."
             });
-
         }
 
+        // Client ID do Jamendo
+        const clientId = process.env.JAMENDO_CLIENT_ID;
 
-        // ========================================
-        // CONFIGURAÇÃO
-        // ========================================
+        // Pesquisa enviada pela URL
+        const query = String(req.query?.q || "").trim();
 
-        const clientId =
-            process.env.JAMENDO_CLIENT_ID;
+        // Quantidade de músicas
+        const limit = Math.min(
+            Number(req.query?.limit) || 20,
+            100
+        );
 
-
-        const query =
-            String(req.query?.q || "").trim();
-
-
-        const limit =
-            Math.min(
-                Number(req.query?.limit) || 20,
-                100
-            );
-
-
-        // ========================================
-        // SEM CHAVE
-        // ========================================
-
+        /*
+         * Se a variável do Jamendo não estiver configurada,
+         * usamos o catálogo local.
+         */
         if (!clientId) {
-
             return res.status(200).json({
-
                 success: true,
-
                 source: "local",
-
-                message:
-                    "JAMENDO_CLIENT_ID ainda não configurado.",
-
+                message: "JAMENDO_CLIENT_ID ainda não configurado.",
                 catalog: getLocalCatalog()
-
             });
-
         }
 
+        // Parâmetros da API do Jamendo
+        const params = new URLSearchParams({
+            client_id: clientId,
+            format: "json",
+            limit: String(limit),
+            include: "musicinfo",
+            order: "relevance"
+        });
 
-        // ========================================
-        // URL DA JAMENDO
-        // ========================================
-
-        const params =
-            new URLSearchParams({
-
-                client_id: clientId,
-
-                format: "json",
-
-                limit: String(limit),
-
-                include:
-                    "musicinfo",
-
-                order:
-                    "relevance"
-
-            });
-
-
-        // Adicionar pesquisa
+        // Pesquisa por música, artista ou termo
         if (query) {
-
-            params.set(
-                "search",
-                query
-            );
-
+            params.set("search", query);
         }
 
-
+        // URL da API
         const url =
             `https://api.jamendo.com/v3.0/tracks/?${params.toString()}`;
 
-
-        // ========================================
-        // CONSULTAR API
-        // ========================================
-
-        const response =
-            await fetch(url);
-
+        // Buscar músicas
+        const response = await fetch(url);
 
         if (!response.ok) {
-
             throw new Error(
                 `Jamendo HTTP ${response.status}`
             );
-
         }
 
+        const data = await response.json();
 
-        const data =
-            await response.json();
-
-
+        // Validar resposta
         if (
             !data ||
             !Array.isArray(data.results)
         ) {
-
             throw new Error(
                 "Resposta inválida da API musical."
             );
-
         }
 
+        // Transformar músicas do Jamendo
+        const catalog = data.results.map(track => ({
+            id:
+                `jamendo-${track.id}`,
 
-        // ========================================
-        // CONVERTER PARA FLIX MUSIC
-        // ========================================
+            title:
+                track.name ||
+                "Música sem título",
 
-        const catalog =
-            data.results.map(
-                track => ({
+            artist:
+                track.artist_name ||
+                "Artista desconhecido",
 
-                    id:
-                        `jamendo-${track.id}`,
+            cover:
+                track.image ||
+                track.album_image ||
+                "",
 
-                    title:
-                        track.name ||
-                        "Música sem título",
+            /*
+             * URL real de reprodução da música
+             */
+            audioUrl:
+                track.audio ||
+                "",
 
-                    artist:
-                        track.artist_name ||
-                        "Artista desconhecido",
+            duration:
+                Number(track.duration) || 0,
 
-                    cover:
-                        track.image ||
-                        track.album_image ||
-                        "",
+            genre:
+                getGenre(track),
 
-                    /*
-                     * A URL de áudio não é preenchida
-                     * automaticamente aqui.
-                     *
-                     * O tipo de reprodução permitido
-                     * depende da licença da faixa.
-                     */
+            /*
+             * Informações de licença
+             */
+            license:
+                track.license_ccurl ||
+                "",
 
-                    audioUrl:
-                        "",
+            /*
+             * Indica se o download é permitido
+             */
+            audioDownloadAllowed:
+                Boolean(
+                    track.audiodownload_allowed
+                )
+        }));
 
-                    duration:
-                        Number(
-                            track.duration
-                        ) || 0,
-
-                    genre:
-                        getGenre(track)
-
-                })
-            );
-
-
-        // ========================================
-        // RESPOSTA
-        // ========================================
-
+        // Resposta final
         return res.status(200).json({
-
             success: true,
-
             source: "jamendo",
-
-            count:
-                catalog.length,
-
+            count: catalog.length,
             catalog
-
         });
-
 
     } catch (error) {
 
@@ -199,27 +134,18 @@ export default async function handler(req, res) {
             error
         );
 
-
         return res.status(500).json({
-
             success: false,
-
             error:
                 "Não foi possível carregar o catálogo."
-
         });
-
     }
-
 }
 
 
 /*
-========================================
-GÊNERO
-========================================
-*/
-
+ * Pegar gênero da música
+ */
 function getGenre(track) {
 
     if (
@@ -228,25 +154,20 @@ function getGenre(track) {
             track.musicinfo.tags?.genres
         )
     ) {
-
         return (
             track.musicinfo.tags.genres[0] ||
             "Outros"
         );
-
     }
 
     return "Outros";
-
 }
 
 
 /*
-========================================
-CATÁLOGO LOCAL
-========================================
-*/
-
+ * Catálogo de emergência
+ * usado caso o Jamendo não esteja configurado
+ */
 function getLocalCatalog() {
 
     return [
@@ -302,5 +223,4 @@ function getLocalCatalog() {
         }
 
     ];
-
 }
