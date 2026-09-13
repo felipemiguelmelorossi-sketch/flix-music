@@ -2,169 +2,128 @@
 ========================================
 FLIX MUSIC — CATÁLOGO
 ========================================
-
-Este arquivo controla o catálogo de músicas.
-
-Por enquanto usamos músicas de demonstração.
-Depois podemos substituir a fonte por uma API
-musical licenciada sem precisar refazer o site.
-
-Formato esperado de cada música:
-
-{
-    id: "1",
-    title: "Nome da música",
-    artist: "Nome do artista",
-    cover: "URL da capa",
-    audioUrl: "URL do áudio",
-    duration: 200,
-    genre: "Pop"
-}
-*/
-
-const FLIX_MUSIC_CATALOG = [
-
-    {
-        id: "flix-001",
-        title: "Midnight Drive",
-        artist: "Flix Sounds",
-        cover: "",
-        audioUrl: "",
-        duration: 214,
-        genre: "Electronic"
-    },
-
-    {
-        id: "flix-002",
-        title: "After Hours",
-        artist: "Nova",
-        cover: "",
-        audioUrl: "",
-        duration: 198,
-        genre: "Pop"
-    },
-
-    {
-        id: "flix-003",
-        title: "Nightfall",
-        artist: "Veyro",
-        cover: "",
-        audioUrl: "",
-        duration: 221,
-        genre: "Electronic"
-    },
-
-    {
-        id: "flix-004",
-        title: "Ocean Lights",
-        artist: "Luma",
-        cover: "",
-        audioUrl: "",
-        duration: 205,
-        genre: "Chill"
-    },
-
-    {
-        id: "flix-005",
-        title: "Golden Hour",
-        artist: "Milo",
-        cover: "",
-        audioUrl: "",
-        duration: 190,
-        genre: "Pop"
-    },
-
-    {
-        id: "flix-006",
-        title: "Echoes",
-        artist: "Aria",
-        cover: "",
-        audioUrl: "",
-        duration: 230,
-        genre: "Alternative"
-    },
-
-    {
-        id: "flix-007",
-        title: "Green Lights",
-        artist: "Kairo",
-        cover: "",
-        audioUrl: "",
-        duration: 201,
-        genre: "Electronic"
-    },
-
-    {
-        id: "flix-008",
-        title: "Red Sky",
-        artist: "Riven",
-        cover: "",
-        audioUrl: "",
-        duration: 215,
-        genre: "Rock"
-    },
-
-    {
-        id: "flix-009",
-        title: "Pulse",
-        artist: "Nero",
-        cover: "",
-        audioUrl: "",
-        duration: 185,
-        genre: "Electronic"
-    },
-
-    {
-        id: "flix-010",
-        title: "Parallel",
-        artist: "Mira",
-        cover: "",
-        audioUrl: "",
-        duration: 207,
-        genre: "Pop"
-    }
-
-];
-
-
-/*
-========================================
-CONFIGURAÇÃO DA API
-========================================
-
-Quando tivermos um fornecedor de catálogo
-musical licenciado, podemos colocar aqui
-o endereço do nosso backend.
-
-IMPORTANTE:
-
-Não coloque aqui uma API KEY secreta.
-
-Chaves privadas devem ficar no servidor,
-por exemplo em uma função /api do Vercel.
 */
 
 const FLIX_MUSIC_API = {
-
-    enabled: false,
-
+    enabled: true,
     endpoint: "/api/catalog",
-
-    timeout: 10000
-
+    timeout: 20000
 };
 
 
 /*
 ========================================
-PEGAR CATÁLOGO LOCAL
+CACHE
 ========================================
 */
 
-function getLocalCatalog(){
+let flixMusicCatalogCache = null;
 
+
+/*
+========================================
+CATÁLOGO LOCAL DE EMERGÊNCIA
+========================================
+*/
+
+const FLIX_MUSIC_CATALOG = [];
+
+
+/*
+========================================
+CATÁLOGO LOCAL
+========================================
+*/
+
+function getLocalCatalog() {
     return [...FLIX_MUSIC_CATALOG];
+}
 
+
+/*
+========================================
+NORMALIZAR MÚSICA
+========================================
+*/
+
+function normalizeSong(song, index) {
+
+    return {
+        id:
+            song.id ||
+            `song-${index + 1}`,
+
+        title:
+            String(
+                song.title ||
+                song.name ||
+                "Música sem título"
+            ),
+
+        artist:
+            String(
+                song.artist ||
+                song.artistName ||
+                song.artist_name ||
+                "Artista desconhecido"
+            ),
+
+        cover:
+            song.cover ||
+            song.coverUrl ||
+            song.image ||
+            song.album_image ||
+            "",
+
+        audioUrl:
+            song.audioUrl ||
+            song.audio ||
+            song.streamUrl ||
+            "",
+
+        duration:
+            Number(song.duration) || 0,
+
+        genre:
+            String(
+                song.genre ||
+                "Outros"
+            ),
+
+        license:
+            song.license ||
+            song.license_ccurl ||
+            "",
+
+        audioDownloadAllowed:
+            Boolean(
+                song.audioDownloadAllowed ??
+                song.audiodownload_allowed
+            )
+    };
+}
+
+
+/*
+========================================
+NORMALIZAR CATÁLOGO
+========================================
+*/
+
+function normalizeCatalog(data) {
+
+    if (!Array.isArray(data)) {
+        return [];
+    }
+
+    return data
+        .map(normalizeSong)
+        .filter(song => {
+            return (
+                song.audioUrl &&
+                song.title
+            );
+        });
 }
 
 
@@ -174,12 +133,23 @@ BUSCAR CATÁLOGO DA API
 ========================================
 */
 
-async function getCatalogFromAPI(){
+async function getCatalogFromAPI(
+    refresh = false
+) {
 
-    if(!FLIX_MUSIC_API.enabled){
+    if (
+        flixMusicCatalogCache &&
+        !refresh
+    ) {
+        return flixMusicCatalogCache;
+    }
 
-        return getLocalCatalog();
+    if (!FLIX_MUSIC_API.enabled) {
 
+        flixMusicCatalogCache =
+            getLocalCatalog();
+
+        return flixMusicCatalogCache;
     }
 
     const controller =
@@ -191,156 +161,177 @@ async function getCatalogFromAPI(){
             FLIX_MUSIC_API.timeout
         );
 
-    try{
+    try {
 
         const response =
             await fetch(
-                FLIX_MUSIC_API.endpoint,
+                `${FLIX_MUSIC_API.endpoint}?limit=600`,
                 {
-                    method:"GET",
-                    headers:{
-                        "Accept":"application/json"
+                    method: "GET",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
                     },
-                    signal:controller.signal
+
+                    signal:
+                        controller.signal,
+
+                    cache: "no-store"
                 }
             );
 
-        if(!response.ok){
+        if (!response.ok) {
 
             throw new Error(
-                "Erro ao carregar catálogo."
+                `API HTTP ${response.status}`
             );
-
         }
 
         const data =
             await response.json();
 
-        if(!Array.isArray(data)){
+        /*
+         * O /api/catalog retorna:
+         *
+         * {
+         *   success: true,
+         *   catalog: [...]
+         * }
+         */
+
+        let songs = [];
+
+        if (
+            data &&
+            Array.isArray(data.catalog)
+        ) {
+
+            songs =
+                normalizeCatalog(
+                    data.catalog
+                );
+
+        } else if (
+            Array.isArray(data)
+        ) {
+
+            songs =
+                normalizeCatalog(data);
+
+        } else {
 
             throw new Error(
                 "Formato de catálogo inválido."
             );
-
         }
 
-        return normalizeCatalog(data);
+        /*
+         * Se a API respondeu sem músicas,
+         * não substituímos por músicas falsas.
+         */
 
-    }catch(error){
+        if (songs.length === 0) {
 
-        console.warn(
-            "API indisponível. Usando catálogo local.",
+            console.warn(
+                "A API respondeu, mas não encontrou músicas."
+            );
+
+            flixMusicCatalogCache = [];
+
+            return [];
+        }
+
+        flixMusicCatalogCache =
+            songs;
+
+        console.log(
+            `FLIX MUSIC: ${songs.length} músicas carregadas.`
+        );
+
+        return songs;
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao carregar catálogo:",
             error
         );
 
+        /*
+         * Se já temos cache, mantém o cache.
+         */
+
+        if (flixMusicCatalogCache) {
+            return flixMusicCatalogCache;
+        }
+
         return getLocalCatalog();
 
-    }finally{
+    } finally {
 
         clearTimeout(timeout);
 
     }
-
 }
 
 
 /*
 ========================================
-NORMALIZAR CATÁLOGO
+GET ALL
 ========================================
-
-Isso permite que o Flix Music receba
-formatos diferentes de uma API e converta
-tudo para o padrão do nosso site.
 */
 
-function normalizeCatalog(data){
+async function getAll(
+    refresh = false
+) {
 
-    return data.map((song,index) => {
-
-        return {
-
-            id:
-                song.id ||
-                `api-${index + 1}`,
-
-            title:
-                song.title ||
-                song.name ||
-                "Música sem título",
-
-            artist:
-                song.artist ||
-                song.artistName ||
-                "Artista desconhecido",
-
-            cover:
-                song.cover ||
-                song.coverUrl ||
-                song.image ||
-                "",
-
-            audioUrl:
-                song.audioUrl ||
-                song.audio ||
-                song.streamUrl ||
-                "",
-
-            duration:
-                Number(song.duration) || 0,
-
-            genre:
-                song.genre ||
-                "Outros"
-
-        };
-
-    });
-
+    return getCatalogFromAPI(
+        refresh
+    );
 }
 
 
 /*
 ========================================
-BUSCAR MÚSICAS
+PESQUISA
 ========================================
 */
 
-async function searchCatalog(query){
+async function searchCatalog(query) {
 
     const catalog =
         await getCatalogFromAPI();
 
     const text =
         String(query || "")
-        .toLowerCase()
-        .trim();
+            .toLowerCase()
+            .trim();
 
-    if(!text){
-
+    if (!text) {
         return catalog;
-
     }
 
     return catalog.filter(song => {
 
         const title =
-            song.title.toLowerCase();
+            song.title
+                .toLowerCase();
 
         const artist =
-            song.artist.toLowerCase();
+            song.artist
+                .toLowerCase();
 
         const genre =
-            song.genre.toLowerCase();
+            song.genre
+                .toLowerCase();
 
         return (
             title.includes(text) ||
             artist.includes(text) ||
             genre.includes(text)
         );
-
     });
-
 }
 
 
@@ -350,15 +341,18 @@ PEGAR MÚSICA PELO ID
 ========================================
 */
 
-async function getSongById(id){
+async function getSongById(id) {
 
     const catalog =
         await getCatalogFromAPI();
 
-    return catalog.find(
-        song => song.id === id
-    ) || null;
-
+    return (
+        catalog.find(
+            song =>
+                String(song.id) ===
+                String(id)
+        ) || null
+    );
 }
 
 
@@ -368,17 +362,23 @@ PEGAR MÚSICAS POR GÊNERO
 ========================================
 */
 
-async function getSongsByGenre(genre){
+async function getSongsByGenre(
+    genre
+) {
 
     const catalog =
         await getCatalogFromAPI();
 
-    return catalog.filter(
-        song =>
-            song.genre.toLowerCase() ===
-            genre.toLowerCase()
-    );
+    const text =
+        String(genre || "")
+            .toLowerCase()
+            .trim();
 
+    return catalog.filter(song =>
+        song.genre
+            .toLowerCase()
+            .includes(text)
+    );
 }
 
 
@@ -388,25 +388,117 @@ PEGAR ARTISTAS
 ========================================
 */
 
-async function getArtists(){
+async function getArtists() {
 
     const catalog =
         await getCatalogFromAPI();
 
-    const artists = [];
+    const artistMap =
+        new Map();
 
     catalog.forEach(song => {
 
-        if(!artists.includes(song.artist)){
-
-            artists.push(song.artist);
-
+        if (!song.artist) {
+            return;
         }
 
+        if (
+            !artistMap.has(
+                song.artist
+            )
+        ) {
+
+            artistMap.set(
+                song.artist,
+                {
+                    name:
+                        song.artist,
+
+                    cover:
+                        song.cover ||
+                        "",
+
+                    songs: []
+                }
+            );
+        }
+
+        artistMap
+            .get(song.artist)
+            .songs
+            .push(song);
     });
 
-    return artists;
+    return Array.from(
+        artistMap.values()
+    );
+}
 
+
+/*
+========================================
+RECOMENDADAS
+========================================
+*/
+
+async function getRecommended() {
+
+    const catalog =
+        await getCatalogFromAPI();
+
+    return catalog.slice(
+        0,
+        Math.min(
+            12,
+            catalog.length
+        )
+    );
+}
+
+
+/*
+========================================
+MAIS OUVIDAS
+========================================
+*/
+
+async function getMostPlayed() {
+
+    const catalog =
+        await getCatalogFromAPI();
+
+    /*
+     * Como o Jamendo não fornece
+     * a quantidade de plays que
+     * queremos usar no site,
+     * usamos uma seleção diferente
+     * do catálogo.
+     */
+
+    return catalog.slice(
+        12,
+        Math.min(
+            24,
+            catalog.length
+        )
+    );
+}
+
+
+/*
+========================================
+ATUALIZAR CACHE
+========================================
+*/
+
+async function refreshCatalog() {
+
+    flixMusicCatalogCache =
+        null;
+
+    return getCatalogFromAPI(
+        true
+    );
 }
 
 
@@ -414,15 +506,14 @@ async function getArtists(){
 ========================================
 EXPORTAÇÃO
 ========================================
-
-Permite usar o catálogo em outros arquivos
-quando o projeto crescer.
 */
 
 window.FlixMusicCatalog = {
 
-    getAll:
-        getCatalogFromAPI,
+    getAll,
+
+    refresh:
+        refreshCatalog,
 
     search:
         searchCatalog,
@@ -433,7 +524,20 @@ window.FlixMusicCatalog = {
     getByGenre:
         getSongsByGenre,
 
-    getArtists:
-        getArtists
+    getArtists,
 
+    getRecommended,
+
+    getMostPlayed
 };
+
+
+/*
+========================================
+DEBUG
+========================================
+*/
+
+console.log(
+    "Flix Music Catalog carregado."
+);
