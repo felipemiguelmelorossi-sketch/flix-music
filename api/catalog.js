@@ -1,6 +1,5 @@
 export default async function handler(req, res) {
     try {
-        // Permitir apenas GET
         if (req.method !== "GET") {
             return res.status(405).json({
                 success: false,
@@ -8,22 +7,16 @@ export default async function handler(req, res) {
             });
         }
 
-        // Client ID do Jamendo
         const clientId = process.env.JAMENDO_CLIENT_ID;
 
-        // Pesquisa enviada pela URL
         const query = String(req.query?.q || "").trim();
 
-        // Quantidade de músicas
-        const limit = Math.min(
-            Number(req.query?.limit) || 20,
-            100
+        // Até 600 músicas: 3 requisições de 200
+        const requestedLimit = Math.min(
+            Number(req.query?.limit) || 600,
+            600
         );
 
-        /*
-         * Se a variável do Jamendo não estiver configurada,
-         * usamos o catálogo local.
-         */
         if (!clientId) {
             return res.status(200).json({
                 success: true,
@@ -33,47 +26,79 @@ export default async function handler(req, res) {
             });
         }
 
-        // Parâmetros da API do Jamendo
-        const params = new URLSearchParams({
-            client_id: clientId,
-            format: "json",
-            limit: String(limit),
-            include: "musicinfo",
-            order: "relevance"
-        });
+        const pageSize = 200;
 
-        // Pesquisa por música, artista ou termo
-        if (query) {
-            params.set("search", query);
-        }
+        const requests = [];
 
-        // URL da API
-        const url =
-            `https://api.jamendo.com/v3.0/tracks/?${params.toString()}`;
-
-        // Buscar músicas
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(
-                `Jamendo HTTP ${response.status}`
-            );
-        }
-
-        const data = await response.json();
-
-        // Validar resposta
-        if (
-            !data ||
-            !Array.isArray(data.results)
+        for (
+            let offset = 0;
+            offset < requestedLimit;
+            offset += pageSize
         ) {
-            throw new Error(
-                "Resposta inválida da API musical."
+            const currentLimit = Math.min(
+                pageSize,
+                requestedLimit - offset
+            );
+
+            const params = new URLSearchParams({
+                client_id: clientId,
+                format: "json",
+                limit: String(currentLimit),
+                offset: String(offset),
+                include: "musicinfo",
+                order: "relevance",
+                audioformat: "mp32",
+                imagesize: "300"
+            });
+
+            if (query) {
+                params.set("search", query);
+            }
+
+            const url =
+                `https://api.jamendo.com/v3.0/tracks/?${params.toString()}`;
+
+            requests.push(
+                fetch(url)
+                    .then(async response => {
+                        if (!response.ok) {
+                            throw new Error(
+                                `Jamendo HTTP ${response.status}`
+                            );
+                        }
+
+                        return response.json();
+                    })
             );
         }
 
-        // Transformar músicas do Jamendo
-        const catalog = data.results.map(track => ({
+        const responses = await Promise.all(requests);
+
+        let allTracks = [];
+
+        for (const data of responses) {
+            if (
+                data &&
+                Array.isArray(data.results)
+            ) {
+                allTracks.push(
+                    ...data.results
+                );
+            }
+        }
+
+        // Remover possíveis músicas duplicadas
+        const uniqueTracks = Array.from(
+            new Map(
+                allTracks.map(track => [
+                    track.id,
+                    track
+                ])
+            ).values()
+        );
+
+        // Transformar para o formato do Flix Music
+        const catalog = uniqueTracks.map(track => ({
             id:
                 `jamendo-${track.id}`,
 
@@ -90,9 +115,6 @@ export default async function handler(req, res) {
                 track.album_image ||
                 "",
 
-            /*
-             * URL real de reprodução da música
-             */
             audioUrl:
                 track.audio ||
                 "",
@@ -103,23 +125,16 @@ export default async function handler(req, res) {
             genre:
                 getGenre(track),
 
-            /*
-             * Informações de licença
-             */
             license:
                 track.license_ccurl ||
                 "",
 
-            /*
-             * Indica se o download é permitido
-             */
             audioDownloadAllowed:
                 Boolean(
                     track.audiodownload_allowed
                 )
         }));
 
-        // Resposta final
         return res.status(200).json({
             success: true,
             source: "jamendo",
@@ -144,7 +159,7 @@ export default async function handler(req, res) {
 
 
 /*
- * Pegar gênero da música
+ * Pegar gênero
  */
 function getGenre(track) {
 
@@ -166,12 +181,10 @@ function getGenre(track) {
 
 /*
  * Catálogo de emergência
- * usado caso o Jamendo não esteja configurado
  */
 function getLocalCatalog() {
 
     return [
-
         {
             id: "flix-001",
             title: "Midnight Drive",
@@ -181,7 +194,6 @@ function getLocalCatalog() {
             duration: 214,
             genre: "Electronic"
         },
-
         {
             id: "flix-002",
             title: "After Hours",
@@ -191,7 +203,6 @@ function getLocalCatalog() {
             duration: 198,
             genre: "Pop"
         },
-
         {
             id: "flix-003",
             title: "Nightfall",
@@ -201,7 +212,6 @@ function getLocalCatalog() {
             duration: 221,
             genre: "Electronic"
         },
-
         {
             id: "flix-004",
             title: "Ocean Lights",
@@ -211,7 +221,6 @@ function getLocalCatalog() {
             duration: 205,
             genre: "Chill"
         },
-
         {
             id: "flix-005",
             title: "Golden Hour",
@@ -221,6 +230,5 @@ function getLocalCatalog() {
             duration: 190,
             genre: "Pop"
         }
-
     ];
 }
