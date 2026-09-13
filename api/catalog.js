@@ -9,11 +9,12 @@ export default async function handler(req, res) {
 
         const clientId = process.env.JAMENDO_CLIENT_ID;
 
-        const query = String(req.query?.q || "").trim();
+        const query = String(
+            req.query?.q || ""
+        ).trim();
 
-        // Até 600 músicas: 3 requisições de 200
         const requestedLimit = Math.min(
-            Number(req.query?.limit) || 600,
+            Number(req.query?.limit) || 100,
             600
         );
 
@@ -21,13 +22,13 @@ export default async function handler(req, res) {
             return res.status(200).json({
                 success: true,
                 source: "local",
-                message: "JAMENDO_CLIENT_ID ainda não configurado.",
-                catalog: getLocalCatalog()
+                message:
+                    "JAMENDO_CLIENT_ID ainda não configurado.",
+                catalog: []
             });
         }
 
         const pageSize = 200;
-
         const requests = [];
 
         for (
@@ -40,19 +41,58 @@ export default async function handler(req, res) {
                 requestedLimit - offset
             );
 
-            const params = new URLSearchParams({
-                client_id: clientId,
-                format: "json",
-                limit: String(currentLimit),
-                offset: String(offset),
-                include: "musicinfo",
-                order: "relevance",
-                audioformat: "mp32",
-                imagesize: "300"
-            });
+            const params = new URLSearchParams();
+
+            params.set(
+                "client_id",
+                clientId
+            );
+
+            params.set(
+                "format",
+                "json"
+            );
+
+            params.set(
+                "limit",
+                String(currentLimit)
+            );
+
+            params.set(
+                "offset",
+                String(offset)
+            );
+
+            params.set(
+                "include",
+                "musicinfo"
+            );
+
+            params.set(
+                "order",
+                "relevance"
+            );
+
+            /*
+             * MP3.
+             * O Jamendo retorna a URL de reprodução
+             * no campo "audio".
+             */
+            params.set(
+                "audioformat",
+                "mp32"
+            );
+
+            params.set(
+                "imagesize",
+                "300"
+            );
 
             if (query) {
-                params.set("search", query);
+                params.set(
+                    "search",
+                    query
+                );
             }
 
             const url =
@@ -62,8 +102,11 @@ export default async function handler(req, res) {
                 fetch(url)
                     .then(async response => {
                         if (!response.ok) {
+                            const text =
+                                await response.text();
+
                             throw new Error(
-                                `Jamendo HTTP ${response.status}`
+                                `Jamendo HTTP ${response.status}: ${text}`
                             );
                         }
 
@@ -72,7 +115,8 @@ export default async function handler(req, res) {
             );
         }
 
-        const responses = await Promise.all(requests);
+        const responses =
+            await Promise.all(requests);
 
         let allTracks = [];
 
@@ -87,53 +131,74 @@ export default async function handler(req, res) {
             }
         }
 
-        // Remover possíveis músicas duplicadas
-        const uniqueTracks = Array.from(
-            new Map(
-                allTracks.map(track => [
-                    track.id,
-                    track
-                ])
-            ).values()
-        );
+        /*
+         * Só mantém músicas que realmente
+         * possuem URL de áudio.
+         */
+        allTracks =
+            allTracks.filter(track => {
+                return (
+                    track &&
+                    track.audio
+                );
+            });
 
-        // Transformar para o formato do Flix Music
-        const catalog = uniqueTracks.map(track => ({
-            id:
-                `jamendo-${track.id}`,
+        /*
+         * Remove duplicadas.
+         */
+        const uniqueTracks =
+            Array.from(
+                new Map(
+                    allTracks.map(track => [
+                        track.id,
+                        track
+                    ])
+                ).values()
+            );
 
-            title:
-                track.name ||
-                "Música sem título",
+        /*
+         * Converte para o formato
+         * usado pelo Flix Music.
+         */
+        const catalog =
+            uniqueTracks.map(track => ({
+                id:
+                    `jamendo-${track.id}`,
 
-            artist:
-                track.artist_name ||
-                "Artista desconhecido",
+                title:
+                    track.name ||
+                    "Música sem título",
 
-            cover:
-                track.image ||
-                track.album_image ||
-                "",
+                artist:
+                    track.artist_name ||
+                    "Artista desconhecido",
 
-            audioUrl:
-                track.audio ||
-                "",
+                cover:
+                    track.image ||
+                    track.album_image ||
+                    "",
 
-            duration:
-                Number(track.duration) || 0,
+                audioUrl:
+                    track.audio ||
+                    "",
 
-            genre:
-                getGenre(track),
+                duration:
+                    Number(
+                        track.duration
+                    ) || 0,
 
-            license:
-                track.license_ccurl ||
-                "",
+                genre:
+                    getGenre(track),
 
-            audioDownloadAllowed:
-                Boolean(
-                    track.audiodownload_allowed
-                )
-        }));
+                license:
+                    track.license_ccurl ||
+                    "",
+
+                audioDownloadAllowed:
+                    Boolean(
+                        track.audiodownload_allowed
+                    )
+            }));
 
         return res.status(200).json({
             success: true,
@@ -152,6 +217,7 @@ export default async function handler(req, res) {
         return res.status(500).json({
             success: false,
             error:
+                error?.message ||
                 "Não foi possível carregar o catálogo."
         });
     }
@@ -164,7 +230,7 @@ export default async function handler(req, res) {
 function getGenre(track) {
 
     if (
-        track.musicinfo &&
+        track?.musicinfo &&
         Array.isArray(
             track.musicinfo.tags?.genres
         )
@@ -176,59 +242,4 @@ function getGenre(track) {
     }
 
     return "Outros";
-}
-
-
-/*
- * Catálogo de emergência
- */
-function getLocalCatalog() {
-
-    return [
-        {
-            id: "flix-001",
-            title: "Midnight Drive",
-            artist: "Flix Sounds",
-            cover: "",
-            audioUrl: "",
-            duration: 214,
-            genre: "Electronic"
-        },
-        {
-            id: "flix-002",
-            title: "After Hours",
-            artist: "Nova",
-            cover: "",
-            audioUrl: "",
-            duration: 198,
-            genre: "Pop"
-        },
-        {
-            id: "flix-003",
-            title: "Nightfall",
-            artist: "Veyro",
-            cover: "",
-            audioUrl: "",
-            duration: 221,
-            genre: "Electronic"
-        },
-        {
-            id: "flix-004",
-            title: "Ocean Lights",
-            artist: "Luma",
-            cover: "",
-            audioUrl: "",
-            duration: 205,
-            genre: "Chill"
-        },
-        {
-            id: "flix-005",
-            title: "Golden Hour",
-            artist: "Milo",
-            cover: "",
-            audioUrl: "",
-            duration: 190,
-            genre: "Pop"
-        }
-    ];
 }
